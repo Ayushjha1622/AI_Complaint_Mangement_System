@@ -7,14 +7,14 @@ import {
 import AppLayout from "@/layouts/AppLayout";
 import { ROUTES } from "@/constants/routes";
 
-import DashboardPage from "@/pages/Dashboard";
-import ComplaintInventoryPage from "@/pages/ComplaintInventory";
-import ComplaintFormPage from "@/pages/ComplaintForm";
-import ComplaintDetailsPage from "@/pages/ComplaintDetails";
-import AnalyticsPage from "@/pages/Analytics";
-import CapaPage from "@/pages/Capa";
-import SettingsPage from "@/pages/Settings";
-import NotFoundPage from "@/pages/NotFound";
+import DashboardPage from "@/pages/Dashboard/DashboardPage";
+import ComplaintInventoryPage from "@/pages/ComplaintInventory/ComplaintInventoryPage";
+import ComplaintFormPage from "@/pages/ComplaintForm/ComplaintFormPage";
+import ComplaintDetailsPage from "@/pages/ComplaintDetails/ComplaintDetailsPage";
+import AnalyticsPage from "@/pages/Analytics/AnalyticsPage";
+import CapaPage from "@/pages/Capa/CapaPage";
+import SettingsPage from "@/pages/Settings/SettingsPage";
+import NotFoundPage from "@/pages/NotFound/NotFoundPage";
 
 export default function RouterProvider() {
     return (
