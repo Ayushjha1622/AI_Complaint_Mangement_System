@@ -1,11 +1,17 @@
-export const ROUTES={
+export const ROUTES = {
 
-    DASHBOARD:"/",
+    DASHBOARD: "/",
 
-    COMPLAINTS:"/complaints",
+    COMPLAINTS: "/complaints",
 
-    NEW_COMPLAINT:"/complaints/new",
+    NEW_COMPLAINT: "/complaints/new",
 
-    DETAILS:"/complaints/:id",
+    DETAILS: "/complaints/:id",
+
+    ANALYTICS: "/analytics",
+
+    CAPA: "/capa",
+
+    SETTINGS: "/settings",
 
 };

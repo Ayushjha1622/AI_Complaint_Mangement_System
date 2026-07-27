@@ -1,39 +1,67 @@
-import { Routes,Route } from "react-router-dom";
-
-import DashboardPage from "@/pages/DashboardPage";
-
-import ComplaintListPage from "@/pages/ComplaintListPage";
-
-import ComplaintFormPage from "@/pages/ComplaintFormPage";
-
-import ComplaintDetailsPage from "@/pages/ComplaintDetailsPage";
-
-import NotFoundPage from "@/pages/NotFoundPage";
+import {
+    BrowserRouter,
+    Routes,
+    Route,
+} from "react-router-dom";
 
 import AppLayout from "@/layouts/AppLayout";
+import { ROUTES } from "@/constants/routes";
 
-export default function AppRoutes(){
+import DashboardPage from "@/pages/Dashboard";
+import ComplaintInventoryPage from "@/pages/ComplaintInventory";
+import ComplaintFormPage from "@/pages/ComplaintForm";
+import ComplaintDetailsPage from "@/pages/ComplaintDetails";
+import AnalyticsPage from "@/pages/Analytics";
+import CapaPage from "@/pages/Capa";
+import SettingsPage from "@/pages/Settings";
+import NotFoundPage from "@/pages/NotFound";
 
-    return(
+export default function RouterProvider() {
+    return (
+        <BrowserRouter>
+            <Routes>
+                <Route element={<AppLayout />}>
+                    <Route
+                        path={ROUTES.DASHBOARD}
+                        element={<DashboardPage />}
+                    />
 
-        <Routes>
+                    <Route
+                        path={ROUTES.COMPLAINTS}
+                        element={<ComplaintInventoryPage />}
+                    />
 
-            <Route element={<AppLayout/>}>
+                    <Route
+                        path={ROUTES.NEW_COMPLAINT}
+                        element={<ComplaintFormPage />}
+                    />
 
-                <Route path="/" element={<DashboardPage/>}/>
+                    <Route
+                        path={ROUTES.DETAILS}
+                        element={<ComplaintDetailsPage />}
+                    />
 
-                <Route path="/complaints" element={<ComplaintListPage/>}/>
+                    <Route
+                        path={ROUTES.ANALYTICS}
+                        element={<AnalyticsPage />}
+                    />
 
-                <Route path="/complaints/new" element={<ComplaintFormPage/>}/>
+                    <Route
+                        path={ROUTES.CAPA}
+                        element={<CapaPage />}
+                    />
 
-                <Route path="/complaints/:id" element={<ComplaintDetailsPage/>}/>
+                    <Route
+                        path={ROUTES.SETTINGS}
+                        element={<SettingsPage />}
+                    />
+                </Route>
 
-            </Route>
-
-            <Route path="*" element={<NotFoundPage/>}/>
-
-        </Routes>
-
-    )
-
+                <Route
+                    path="*"
+                    element={<NotFoundPage />}
+                />
+            </Routes>
+        </BrowserRouter>
+    );
 }

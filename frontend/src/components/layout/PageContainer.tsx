@@ -8,7 +8,7 @@ type PageContainerProps = {
   className?: string;
 };
 
-export function PageContainer({
+export default function PageContainer({
   title,
   description,
   children,
