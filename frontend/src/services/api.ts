@@ -1,4 +1,10 @@
-const BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8000/api";
+const BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8000/api/v1";
+
+export interface ApiResponse<T> {
+  success: boolean;
+  message: str;
+  data: T;
+}
 
 export async function apiFetch<T>(endpoint: string, options?: RequestInit): Promise<T> {
   const response = await fetch(`${BASE_URL}${endpoint}`, {
@@ -10,10 +16,15 @@ export async function apiFetch<T>(endpoint: string, options?: RequestInit): Prom
   });
 
   if (!response.ok) {
-    throw new Error(`API Error: ${response.statusText}`);
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.message || `API Error: ${response.statusText}`);
   }
 
-  return response.json();
+  const json = await response.json();
+  if (json && typeof json === "object" && "success" in json && "data" in json) {
+    return json.data as T;
+  }
+  return json as T;
 }
 
 export default {
