@@ -11,7 +11,7 @@ from app.repositories.user_repository import UserRepository
 from app.models.user import User
 
 oauth2_scheme = OAuth2PasswordBearer(
-    tokenUrl="/api/v1/auth/login"
+    tokenUrl="/api/v1/auth/token"
 )
 
 
@@ -31,7 +31,8 @@ async def get_current_user(
             algorithms=[settings.ALGORITHM],
         )
         user_id: str = payload.get("sub")
-        if user_id is None:
+        token_type: str = payload.get("type")
+        if user_id is None or token_type != "access":
             raise credentials_exception
     except JWTError:
         raise credentials_exception

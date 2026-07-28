@@ -1,8 +1,23 @@
-from datetime import datetime, timezone, timedelta
-import bcrypt
-from jose import jwt
+from datetime import datetime, timedelta, UTC
+from typing import Any
+
+from jose import JWTError, jwt
 
 from app.core.config import settings
+
+import bcrypt
+
+
+def verify_password(
+    plain_password: str,
+    hashed_password: str,
+) -> bool:
+    pw_bytes = plain_password.encode("utf-8")
+    hashed_bytes = hashed_password.encode("utf-8")
+    try:
+        return bcrypt.checkpw(pw_bytes, hashed_bytes)
+    except Exception:
+        return False
 
 
 def hash_password(password: str) -> str:
@@ -12,22 +27,32 @@ def hash_password(password: str) -> str:
     return hashed.decode("utf-8")
 
 
-def verify_password(password: str, hashed: str) -> bool:
-    pw_bytes = password.encode("utf-8")
-    hashed_bytes = hashed.encode("utf-8")
-    try:
-        return bcrypt.checkpw(pw_bytes, hashed_bytes)
-    except Exception:
-        return False
 
+def create_access_token(
+    data: dict[str, Any],
+) -> str:
 
-
-def create_access_token(data: dict) -> str:
     payload = data.copy()
-    expire = datetime.now(timezone.utc) + timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
-    payload.update({"exp": expire})
+
+    payload["exp"] = (
+        datetime.now(UTC)
+        + timedelta(
+            minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES
+        )
+    )
+
+    payload["type"] = "access"
+
     return jwt.encode(
         payload,
         settings.SECRET_KEY,
         algorithm=settings.ALGORITHM,
+    )
+
+
+def decode_token(token: str) -> dict[str, Any]:
+    return jwt.decode(
+        token,
+        settings.SECRET_KEY,
+        algorithms=[settings.ALGORITHM],
     )

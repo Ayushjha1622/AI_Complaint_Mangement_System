@@ -6,7 +6,7 @@ from app.core.security import (
     verify_password,
     create_access_token,
 )
-from app.core.exceptions import APIException
+from app.core.exceptions import APIException, InvalidCredentialsException
 from app.schemas.auth import RegisterRequest, LoginRequest
 
 
@@ -27,19 +27,30 @@ class AuthService:
         )
         return await self.repo.create(user)
 
-    async def login(self, data: LoginRequest) -> dict:
+    async def login(
+        self,
+        data: LoginRequest,
+    ):
         user = await self.repo.get_by_email(data.email)
-        if not user or not verify_password(data.password, user.hashed_password):
-            raise APIException(status_code=401, message="Invalid credentials")
+
+        if not user:
+            raise InvalidCredentialsException()
+
+        if not verify_password(
+            data.password,
+            user.hashed_password,
+        ):
+            raise InvalidCredentialsException()
 
         token = create_access_token(
             {
                 "sub": str(user.id),
+                "email": user.email,
                 "role": user.role.value,
             }
         )
+
         return {
             "access_token": token,
-            "refresh_token": token,
             "token_type": "bearer",
         }

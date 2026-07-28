@@ -1,4 +1,4 @@
-from fastapi import Request
+from fastapi import Request, HTTPException
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 
@@ -9,6 +9,11 @@ class APIException(Exception):
         self.message = message
 
 
+class InvalidCredentialsException(APIException):
+    def __init__(self):
+        super().__init__(status_code=401, message="Invalid email or password")
+
+
 async def api_exception_handler(request: Request, exc: APIException):
     return JSONResponse(
         status_code=exc.status_code,
@@ -17,6 +22,18 @@ async def api_exception_handler(request: Request, exc: APIException):
             "message": exc.message,
             "data": None,
         },
+    )
+
+
+async def http_exception_handler(request: Request, exc: HTTPException):
+    return JSONResponse(
+        status_code=exc.status_code,
+        content={
+            "success": False,
+            "message": exc.detail,
+            "data": None,
+        },
+        headers=exc.headers,
     )
 
 
@@ -33,4 +50,5 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
             "data": None,
         },
     )
+
 
