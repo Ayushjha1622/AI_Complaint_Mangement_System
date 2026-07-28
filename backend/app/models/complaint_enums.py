@@ -19,5 +19,6 @@ class ComplaintPriority(str, Enum):
 class ComplaintStatus(str, Enum):
     OPEN = "OPEN"
     IN_PROGRESS = "IN_PROGRESS"
+    UNDER_REVIEW = "UNDER_REVIEW"
     RESOLVED = "RESOLVED"
     CLOSED = "CLOSED"

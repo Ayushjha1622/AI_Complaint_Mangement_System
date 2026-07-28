@@ -6,6 +6,7 @@ from fastapi import HTTPException, status
 from app.models.complaint import Complaint
 from app.models.user import User
 from app.models.user import User
+from app.core.complaint_workflow import is_valid_transition
 from app.models.enums import UserRole
 from app.repositories.complaint_repository import ComplaintRepository
 from app.repositories.user_repository import UserRepository
@@ -15,6 +16,7 @@ from app.schemas.complaint import (
     ComplaintResponse,
     ComplaintListResponse,
     ComplaintAssignRequest,
+    ComplaintStatusUpdate,
 )
 from app.schemas.complaint_query import ComplaintQuery
 from app.utils.complaint_number import generate_complaint_number
@@ -77,6 +79,36 @@ class ComplaintService:
         return await self.repo.assign_complaint(
             complaint,
             investigator.id,
+        )
+
+    async def update_status(
+        self,
+        complaint_id: UUID,
+        payload: ComplaintStatusUpdate,
+    ) -> Complaint:
+
+        # Fetch complaint
+        complaint = await self.get(complaint_id)
+
+        # Validate workflow transition
+        if not is_valid_transition(
+            complaint.status,
+            payload.status,
+        ):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=(
+                    f"Invalid status transition "
+                    f"from {complaint.status.value} "
+                    f"to {payload.status.value}"
+                ),
+            )
+
+        # Update status
+        complaint.status = payload.status
+
+        return await self.repo.update_status(
+            complaint
         )
 
     async def list(self):

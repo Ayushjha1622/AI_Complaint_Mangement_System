@@ -65,6 +65,10 @@ class ComplaintAssignRequest(BaseModel):
     assigned_to: UUID
 
 
+class ComplaintStatusUpdate(BaseModel):
+    status: ComplaintStatus
+
+
 class ComplaintListResponse(BaseModel):
     items: list[ComplaintResponse]
 

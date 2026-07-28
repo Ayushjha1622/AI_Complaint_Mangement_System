@@ -132,6 +132,16 @@ class ComplaintRepository:
 
         return complaint
 
+    async def update_status(
+        self,
+        complaint: Complaint,
+    ) -> Complaint:
+
+        await self.db.commit()
+        await self.db.refresh(complaint)
+
+        return complaint
+
     async def get_count(self) -> int:
         result = await self.db.execute(
             select(func.count()).select_from(Complaint)
