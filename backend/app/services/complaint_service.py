@@ -5,6 +5,7 @@ from fastapi import HTTPException, status
 
 from app.models.complaint import Complaint
 from app.models.user import User
+from app.models.user import User
 from app.repositories.complaint_repository import ComplaintRepository
 from app.schemas.complaint import (
     ComplaintCreate,
@@ -51,10 +52,12 @@ class ComplaintService:
     async def list_paginated(
         self,
         query: ComplaintQuery,
+        current_user: User,
     ):
 
         complaints, total = await self.repo.list_with_filters(
-            query
+            query,
+            current_user,
         )
 
         return ComplaintListResponse(

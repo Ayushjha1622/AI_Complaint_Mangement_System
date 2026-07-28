@@ -4,6 +4,8 @@ from sqlalchemy import func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.complaint import Complaint
+from app.models.user import User
+from app.models.enums import UserRole
 from app.schemas.complaint_query import ComplaintQuery
 
 
@@ -33,9 +35,29 @@ class ComplaintRepository:
     async def list_with_filters(
         self,
         query: ComplaintQuery,
+        current_user: User,
     ):
         stmt = select(Complaint)
 
+        # -----------------------------
+        # Role-Based Visibility
+        # -----------------------------
+        if current_user.role == UserRole.CUSTOMER_SUPPORT:
+            stmt = stmt.where(
+                Complaint.created_by == current_user.id
+            )
+
+        elif current_user.role == UserRole.INVESTIGATOR:
+            stmt = stmt.where(
+                Complaint.assigned_to == current_user.id
+            )
+
+        # ADMIN, QA_MANAGER and VIEWER
+        # see all complaints
+
+        # -----------------------------
+        # Filters
+        # -----------------------------
         if query.status:
             stmt = stmt.where(
                 Complaint.status == query.status

@@ -3,8 +3,9 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, status
 
 from app.api.deps import get_complaint_service
-from app.core.dependencies import get_current_user
+from app.core.dependencies import get_current_user, RoleChecker
 from app.models.user import User
+from app.models.enums import UserRole
 from app.schemas.common import ApiResponse
 from app.schemas.complaint import (
     ComplaintCreate,
@@ -50,10 +51,14 @@ async def create_complaint(
 )
 async def list_complaints(
     query: ComplaintQuery = Depends(),
+    current_user: User = Depends(get_current_user),
     service: ComplaintService = Depends(get_complaint_service),
 ):
 
-    data = await service.list_paginated(query)
+    data = await service.list_paginated(
+        query,
+        current_user,
+    )
 
     return ApiResponse(
         success=True,
