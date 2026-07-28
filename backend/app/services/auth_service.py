@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta, UTC
-from app.models import User, UserRole, RefreshToken
+from app.models import User, RefreshToken
+from app.models.enums import UserRole
 from app.repositories.user_repository import UserRepository
 from app.repositories.refresh_token_repository import RefreshTokenRepository
 from app.core.security import (

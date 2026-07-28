@@ -46,3 +46,15 @@ class User(BaseModel):
         back_populates="user",
         cascade="all, delete-orphan",
     )
+
+    created_complaints = relationship(
+        "Complaint",
+        foreign_keys="Complaint.created_by",
+        back_populates="creator",
+    )
+
+    assigned_complaints = relationship(
+        "Complaint",
+        foreign_keys="Complaint.assigned_to",
+        back_populates="assignee",
+    )
