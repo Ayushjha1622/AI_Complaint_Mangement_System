@@ -6,12 +6,15 @@ from fastapi import HTTPException, status
 from app.models.complaint import Complaint
 from app.models.user import User
 from app.models.user import User
+from app.models.enums import UserRole
 from app.repositories.complaint_repository import ComplaintRepository
+from app.repositories.user_repository import UserRepository
 from app.schemas.complaint import (
     ComplaintCreate,
     ComplaintUpdate,
     ComplaintResponse,
     ComplaintListResponse,
+    ComplaintAssignRequest,
 )
 from app.schemas.complaint_query import ComplaintQuery
 from app.utils.complaint_number import generate_complaint_number
@@ -22,8 +25,10 @@ class ComplaintService:
     def __init__(
         self,
         repo: ComplaintRepository,
+        user_repo: UserRepository,
     ):
         self.repo = repo
+        self.user_repo = user_repo
 
     async def create(
         self,
@@ -44,6 +49,35 @@ class ComplaintService:
         )
 
         return await self.repo.create(complaint)
+
+    async def assign_complaint(
+        self,
+        complaint_id: UUID,
+        payload: ComplaintAssignRequest,
+    ) -> Complaint:
+
+        complaint = await self.get(complaint_id)
+
+        investigator = await self.user_repo.get_by_id(
+            payload.assigned_to
+        )
+
+        if investigator is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="User not found",
+            )
+
+        if investigator.role != UserRole.INVESTIGATOR:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Assigned user must have INVESTIGATOR role",
+            )
+
+        return await self.repo.assign_complaint(
+            complaint,
+            investigator.id,
+        )
 
     async def list(self):
 

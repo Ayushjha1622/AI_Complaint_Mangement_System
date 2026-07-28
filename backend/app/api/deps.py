@@ -14,7 +14,8 @@ def get_complaint_service(
     db: AsyncSession = Depends(get_db),
 ) -> ComplaintService:
     repo = ComplaintRepository(db)
-    return ComplaintService(repo)
+    user_repo = UserRepository(db)
+    return ComplaintService(repo, user_repo)
 
 
 def get_auth_service(

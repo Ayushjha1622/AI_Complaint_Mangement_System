@@ -3,7 +3,7 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, status
 
 from app.api.deps import get_complaint_service
-from app.core.dependencies import get_current_user, RoleChecker
+from app.core.dependencies import get_current_user, RoleChecker, qa_manager_only
 from app.models.user import User
 from app.models.enums import UserRole
 from app.schemas.common import ApiResponse
@@ -12,6 +12,7 @@ from app.schemas.complaint import (
     ComplaintResponse,
     ComplaintUpdate,
     ComplaintListResponse,
+    ComplaintAssignRequest,
 )
 from app.schemas.complaint_query import ComplaintQuery
 from app.services.complaint_service import ComplaintService
@@ -127,4 +128,28 @@ async def delete_complaint(
         success=True,
         message="Complaint deleted successfully",
         data=None,
+    )
+
+@router.patch(
+    "/{complaint_id}/assign",
+    response_model=ApiResponse[ComplaintResponse],
+)
+async def assign_complaint(
+    complaint_id: UUID,
+    payload: ComplaintAssignRequest,
+    service: ComplaintService = Depends(get_complaint_service),
+    current_user: User = Depends(qa_manager_only),
+):
+
+    complaint = await service.assign_complaint(
+        complaint_id,
+        payload,
+    )
+
+    return ApiResponse(
+        success=True,
+        message="Complaint assigned successfully",
+        data=ComplaintResponse.model_validate(
+            complaint
+        ),
     )

@@ -119,6 +119,19 @@ class ComplaintRepository:
         await self.db.delete(complaint)
         await self.db.commit()
 
+    async def assign_complaint(
+        self,
+        complaint: Complaint,
+        investigator_id: UUID,
+    ) -> Complaint:
+
+        complaint.assigned_to = investigator_id
+
+        await self.db.commit()
+        await self.db.refresh(complaint)
+
+        return complaint
+
     async def get_count(self) -> int:
         result = await self.db.execute(
             select(func.count()).select_from(Complaint)

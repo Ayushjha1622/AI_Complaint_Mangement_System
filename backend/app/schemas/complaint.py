@@ -61,6 +61,10 @@ class ComplaintResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
+class ComplaintAssignRequest(BaseModel):
+    assigned_to: UUID
+
+
 class ComplaintListResponse(BaseModel):
     items: list[ComplaintResponse]
 
