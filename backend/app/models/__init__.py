@@ -7,9 +7,11 @@ from sqlalchemy.dialects.postgresql import UUID
 from app.db.base import Base
 from app.models.enums import UserRole
 from app.models.user import User
+from app.models.refresh_token import RefreshToken
 
 __all__ = [
     "User",
+    "RefreshToken",
     "UserRole",
     "Complaint",
     "Comment",

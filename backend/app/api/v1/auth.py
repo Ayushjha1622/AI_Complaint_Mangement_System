@@ -1,9 +1,6 @@
 from fastapi import APIRouter, Depends, status
 from fastapi.security import OAuth2PasswordRequestForm
-from sqlalchemy.ext.asyncio import AsyncSession
-
-from app.db.session import get_db
-from app.repositories.user_repository import UserRepository
+from app.api.deps import get_auth_service
 from app.services.auth_service import AuthService
 from app.schemas.auth import RegisterRequest, LoginRequest, LoginResponse
 from app.schemas.user import UserResponse
@@ -13,9 +10,10 @@ router = APIRouter(prefix="/auth", tags=["Authentication"])
 
 
 @router.post("/register", response_model=ApiResponse[UserResponse], status_code=status.HTTP_201_CREATED)
-async def register(payload: RegisterRequest, db: AsyncSession = Depends(get_db)):
-    repo = UserRepository(db)
-    service = AuthService(repo)
+async def register(
+    payload: RegisterRequest, 
+    service: AuthService = Depends(get_auth_service)
+):
     user = await service.register(payload)
     return ApiResponse(
         success=True,
@@ -25,9 +23,10 @@ async def register(payload: RegisterRequest, db: AsyncSession = Depends(get_db))
 
 
 @router.post("/login", response_model=ApiResponse[LoginResponse])
-async def login(payload: LoginRequest, db: AsyncSession = Depends(get_db)):
-    repo = UserRepository(db)
-    service = AuthService(repo)
+async def login(
+    payload: LoginRequest,
+    service: AuthService = Depends(get_auth_service)
+):
     token_data = await service.login(payload)
     return ApiResponse(
         success=True,
@@ -39,11 +38,8 @@ async def login(payload: LoginRequest, db: AsyncSession = Depends(get_db)):
 @router.post("/token")
 async def token_login(
     form_data: OAuth2PasswordRequestForm = Depends(),
-    db: AsyncSession = Depends(get_db),
+    service: AuthService = Depends(get_auth_service),
 ):
-    repo = UserRepository(db)
-    service = AuthService(repo)
-
     token_data = await service.login(
         LoginRequest(
             email=form_data.username,

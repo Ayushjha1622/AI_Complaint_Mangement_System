@@ -1,10 +1,10 @@
-from app.models.user import User
-from app.models.enums import UserRole
+from app.models import User, UserRole
 from app.repositories.user_repository import UserRepository
 from app.core.security import (
     hash_password,
     verify_password,
     create_access_token,
+    create_refresh_token,
 )
 from app.core.exceptions import APIException, InvalidCredentialsException
 from app.schemas.auth import RegisterRequest, LoginRequest
@@ -49,8 +49,17 @@ class AuthService:
                 "role": user.role.value,
             }
         )
+        
+        refresh_token = create_refresh_token(
+            {
+                "sub": str(user.id),
+                "email": user.email,
+                "role": user.role.value,
+            }
+        )
 
         return {
             "access_token": token,
+            "refresh_token": refresh_token,
             "token_type": "bearer",
         }

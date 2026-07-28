@@ -7,6 +7,8 @@ from app.core.config import settings
 
 import bcrypt
 
+REFRESH_TOKEN_EXPIRE_DAYS = 7
+
 
 def verify_password(
     plain_password: str,
@@ -42,6 +44,21 @@ def create_access_token(
     )
 
     payload["type"] = "access"
+
+    return jwt.encode(
+        payload,
+        settings.SECRET_KEY,
+        algorithm=settings.ALGORITHM,
+    )
+
+
+def create_refresh_token(data: dict[str, Any]) -> str:
+    payload = data.copy()
+    payload["type"] = "refresh"
+    payload["exp"] = (
+        datetime.now(UTC)
+        + timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS)
+    )
 
     return jwt.encode(
         payload,
