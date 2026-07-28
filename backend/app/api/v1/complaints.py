@@ -1,70 +1,123 @@
-from typing import List, Optional
 from uuid import UUID
+
 from fastapi import APIRouter, Depends, status
-from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.db.session import get_db
-from app.services.complaint_service import ComplaintService
-from app.schemas.complaint import ComplaintCreate, ComplaintUpdate, ComplaintResponse
+from app.api.deps import get_complaint_service
+from app.core.dependencies import get_current_user
+from app.models.user import User
 from app.schemas.common import ApiResponse
+from app.schemas.complaint import (
+    ComplaintCreate,
+    ComplaintResponse,
+    ComplaintUpdate,
+)
+from app.services.complaint_service import ComplaintService
 
-router = APIRouter(prefix="/complaints", tags=["Complaints"])
+router = APIRouter(
+    prefix="/complaints",
+    tags=["Complaints"],
+)
 
-
-@router.get("", response_model=ApiResponse[List[ComplaintResponse]])
-async def list_complaints(
-    status: Optional[str] = None,
-    priority: Optional[str] = None,
-    db: AsyncSession = Depends(get_db),
+@router.post(
+    "",
+    response_model=ApiResponse[ComplaintResponse],
+    status_code=status.HTTP_201_CREATED,
+)
+async def create_complaint(
+    payload: ComplaintCreate,
+    current_user: User = Depends(get_current_user),
+    service: ComplaintService = Depends(get_complaint_service),
 ):
-    service = ComplaintService(db)
-    items = await service.get_all_complaints(status=status, priority=priority)
-    return ApiResponse(
-        success=True,
-        message="Complaints fetched successfully",
-        data=[ComplaintResponse.model_validate(item) for item in items],
+
+    complaint = await service.create(
+        payload,
+        current_user,
     )
 
-
-@router.get("/{complaint_id}", response_model=ApiResponse[ComplaintResponse])
-async def get_complaint(complaint_id: UUID, db: AsyncSession = Depends(get_db)):
-    service = ComplaintService(db)
-    complaint = await service.get_complaint_by_id(complaint_id)
-    return ApiResponse(
-        success=True,
-        message="Complaint details retrieved successfully",
-        data=ComplaintResponse.model_validate(complaint),
-    )
-
-
-@router.post("", response_model=ApiResponse[ComplaintResponse], status_code=status.HTTP_201_CREATED)
-async def create_complaint(payload: ComplaintCreate, db: AsyncSession = Depends(get_db)):
-    service = ComplaintService(db)
-    created = await service.create_complaint(payload)
     return ApiResponse(
         success=True,
         message="Complaint created successfully",
-        data=ComplaintResponse.model_validate(created),
+        data=ComplaintResponse.model_validate(
+            complaint
+        ),
     )
 
-
-@router.put("/{complaint_id}", response_model=ApiResponse[ComplaintResponse])
-async def update_complaint(
-    complaint_id: UUID, payload: ComplaintUpdate, db: AsyncSession = Depends(get_db)
+@router.get(
+    "",
+    response_model=ApiResponse[list[ComplaintResponse]],
+)
+async def list_complaints(
+    service: ComplaintService = Depends(get_complaint_service),
 ):
-    service = ComplaintService(db)
-    updated = await service.update_complaint(complaint_id, payload)
+
+    complaints = await service.list()
+
+    return ApiResponse(
+        success=True,
+        message="Complaints fetched successfully",
+        data=[
+            ComplaintResponse.model_validate(c)
+            for c in complaints
+        ],
+    )
+
+@router.get(
+    "/{complaint_id}",
+    response_model=ApiResponse[ComplaintResponse],
+)
+async def get_complaint(
+    complaint_id: UUID,
+    service: ComplaintService = Depends(get_complaint_service),
+):
+
+    complaint = await service.get(
+        complaint_id
+    )
+
+    return ApiResponse(
+        success=True,
+        message="Complaint fetched successfully",
+        data=ComplaintResponse.model_validate(
+            complaint
+        ),
+    )
+
+@router.put(
+    "/{complaint_id}",
+    response_model=ApiResponse[ComplaintResponse],
+)
+async def update_complaint(
+    complaint_id: UUID,
+    payload: ComplaintUpdate,
+    service: ComplaintService = Depends(get_complaint_service),
+):
+
+    complaint = await service.update(
+        complaint_id,
+        payload,
+    )
+
     return ApiResponse(
         success=True,
         message="Complaint updated successfully",
-        data=ComplaintResponse.model_validate(updated),
+        data=ComplaintResponse.model_validate(
+            complaint
+        ),
     )
 
+@router.delete(
+    "/{complaint_id}",
+    response_model=ApiResponse[None],
+)
+async def delete_complaint(
+    complaint_id: UUID,
+    service: ComplaintService = Depends(get_complaint_service),
+):
 
-@router.delete("/{complaint_id}", response_model=ApiResponse[None])
-async def delete_complaint(complaint_id: UUID, db: AsyncSession = Depends(get_db)):
-    service = ComplaintService(db)
-    await service.delete_complaint(complaint_id)
+    await service.delete(
+        complaint_id
+    )
+
     return ApiResponse(
         success=True,
         message="Complaint deleted successfully",

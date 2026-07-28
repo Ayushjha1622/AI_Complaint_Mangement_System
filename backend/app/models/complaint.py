@@ -35,18 +35,21 @@ class Complaint(BaseModel):
     category: Mapped[ComplaintCategory] = mapped_column(
         Enum(ComplaintCategory),
         nullable=False,
+        index=True,
     )
 
     priority: Mapped[ComplaintPriority] = mapped_column(
         Enum(ComplaintPriority),
         default=ComplaintPriority.MEDIUM,
         nullable=False,
+        index=True,
     )
 
     status: Mapped[ComplaintStatus] = mapped_column(
         Enum(ComplaintStatus),
         default=ComplaintStatus.OPEN,
         nullable=False,
+        index=True,
     )
 
     customer_name: Mapped[str] = mapped_column(

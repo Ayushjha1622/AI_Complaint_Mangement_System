@@ -1,54 +1,61 @@
-from datetime import datetime
-from typing import Optional, List
 from uuid import UUID
-from pydantic import BaseModel, ConfigDict
+from datetime import datetime
+
+from pydantic import BaseModel, ConfigDict, EmailStr
+
+from app.models.complaint_enums import (
+    ComplaintCategory,
+    ComplaintPriority,
+    ComplaintStatus,
+)
 
 
-class ComplaintBase(BaseModel):
-    customer_name: str
-    customer_email: Optional[str] = None
-    customer_phone: Optional[str] = None
-    company: Optional[str] = None
-    product: str
-    batch_number: Optional[str] = None
-    category: str
-    priority: str = "Medium"
-    status: str = "Open"
+class ComplaintCreate(BaseModel):
+    title: str
     description: str
-    assigned_to: Optional[str] = None
 
+    customer_name: str
+    customer_email: EmailStr
+    customer_phone: str | None = None
 
-class ComplaintCreate(ComplaintBase):
-    pass
+    category: ComplaintCategory
+    priority: ComplaintPriority = ComplaintPriority.MEDIUM
 
 
 class ComplaintUpdate(BaseModel):
-    customer_name: Optional[str] = None
-    product: Optional[str] = None
-    category: Optional[str] = None
-    priority: Optional[str] = None
-    status: Optional[str] = None
-    description: Optional[str] = None
-    assigned_to: Optional[str] = None
+    title: str | None = None
+    description: str | None = None
+
+    category: ComplaintCategory | None = None
+    priority: ComplaintPriority | None = None
+    status: ComplaintStatus | None = None
+
+    assigned_to: UUID | None = None
 
 
-class ComplaintResponse(ComplaintBase):
+class ComplaintResponse(BaseModel):
+
     id: UUID
+
     complaint_number: str
+
+    title: str
+
+    description: str
+
+    customer_name: str
+    customer_email: EmailStr
+    customer_phone: str | None
+
+    category: ComplaintCategory
+    priority: ComplaintPriority
+    status: ComplaintStatus
+
+    assigned_to: UUID | None
+
+    created_by: UUID
+
     created_at: datetime
     updated_at: datetime
-
-    model_config = ConfigDict(from_attributes=True)
-
-
-class CommentCreate(BaseModel):
-    author: str
-    message: str
-
-
-class CommentResponse(CommentCreate):
-    id: int
-    complaint_id: UUID
-    created_at: datetime
 
     model_config = ConfigDict(from_attributes=True)

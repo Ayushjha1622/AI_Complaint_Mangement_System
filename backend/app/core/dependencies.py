@@ -88,4 +88,11 @@ support_only = RoleChecker(
     UserRole.CUSTOMER_SUPPORT,
 )
 
+# Create Complaint: Admin ✅  QA ✅  Support ✅  (per permission matrix)
+complaint_creator = RoleChecker(
+    UserRole.ADMIN,
+    UserRole.QA_MANAGER,
+    UserRole.CUSTOMER_SUPPORT,
+)
+
 authenticated_user = Depends(get_current_user)

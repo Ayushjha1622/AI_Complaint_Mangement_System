@@ -1,44 +1,100 @@
-from typing import List, Optional
-from uuid import UUID, uuid4
-from sqlalchemy.ext.asyncio import AsyncSession
+from uuid import UUID
 
-from app.models import Complaint
+from fastapi import HTTPException, status
+
+from app.models.complaint import Complaint
+from app.models.user import User
 from app.repositories.complaint_repository import ComplaintRepository
-from app.schemas.complaint import ComplaintCreate, ComplaintUpdate
-from app.core.exceptions import APIException
+from app.schemas.complaint import (
+    ComplaintCreate,
+    ComplaintUpdate,
+)
+from app.utils.complaint_number import generate_complaint_number
 
 
 class ComplaintService:
-    def __init__(self, db: AsyncSession):
-        self.repo = ComplaintRepository(db)
 
-    async def get_all_complaints(self, status: Optional[str] = None, priority: Optional[str] = None) -> List[Complaint]:
-        return await self.repo.get_filtered(status=status, priority=priority)
+    def __init__(
+        self,
+        repo: ComplaintRepository,
+    ):
+        self.repo = repo
 
-    async def get_complaint_by_id(self, complaint_id: UUID) -> Complaint:
-        complaint = await self.repo.get_by_id(complaint_id)
-        if not complaint:
-            raise APIException(status_code=404, message="Complaint not found")
-        return complaint
+    async def create(
+        self,
+        payload: ComplaintCreate,
+        current_user: User,
+    ) -> Complaint:
 
-    async def create_complaint(self, payload: ComplaintCreate) -> Complaint:
-        count = await self.repo.get_count()
-        complaint_number = f"CMP-{1001 + count}"
         complaint = Complaint(
-            id=uuid4(),
-            complaint_number=complaint_number,
-            **payload.model_dump(),
+            complaint_number=generate_complaint_number(),
+            title=payload.title,
+            description=payload.description,
+            customer_name=payload.customer_name,
+            customer_email=payload.customer_email,
+            customer_phone=payload.customer_phone,
+            category=payload.category,
+            priority=payload.priority,
+            created_by=current_user.id,
         )
+
         return await self.repo.create(complaint)
 
-    async def update_complaint(self, complaint_id: UUID, payload: ComplaintUpdate) -> Complaint:
-        complaint = await self.get_complaint_by_id(complaint_id)
-        for key, value in payload.model_dump(exclude_unset=True).items():
-            setattr(complaint, key, value)
-        await self.repo.db.commit()
-        await self.repo.db.refresh(complaint)
+    async def list(self):
+
+        return await self.repo.list()
+
+    async def get(
+        self,
+        complaint_id: UUID,
+    ) -> Complaint:
+
+        complaint = await self.repo.get(
+            complaint_id
+        )
+
+        if complaint is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Complaint not found",
+            )
+
         return complaint
 
-    async def delete_complaint(self, complaint_id: UUID) -> None:
-        complaint = await self.get_complaint_by_id(complaint_id)
-        await self.repo.delete(complaint)
+    async def delete(
+        self,
+        complaint_id: UUID,
+    ):
+
+        complaint = await self.get(
+            complaint_id
+        )
+
+        await self.repo.delete(
+            complaint
+        )
+
+    async def update(
+        self,
+        complaint_id: UUID,
+        payload: ComplaintUpdate,
+    ) -> Complaint:
+
+        complaint = await self.get(
+            complaint_id
+        )
+
+        update_data = payload.model_dump(
+            exclude_unset=True
+        )
+
+        for field, value in update_data.items():
+            setattr(
+                complaint,
+                field,
+                value,
+            )
+
+        return await self.repo.update(
+            complaint
+        )
