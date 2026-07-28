@@ -1,6 +1,6 @@
 from uuid import UUID
 from typing import List
-from fastapi import Depends, HTTPException
+from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from jose import jwt, JWTError
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -20,7 +20,7 @@ async def get_current_user(
     db: AsyncSession = Depends(get_db),
 ) -> User:
     credentials_exception = HTTPException(
-        status_code=401,
+        status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate credentials",
         headers={"WWW-Authenticate": "Bearer"},
     )
@@ -45,13 +45,47 @@ async def get_current_user(
 
 
 class RoleChecker:
-    def __init__(self, roles: List[str]):
-        self.roles = roles
 
-    async def __call__(self, current_user: User = Depends(get_current_user)) -> User:
-        if current_user.role.value not in self.roles:
+    def __init__(self, *roles: "UserRole"):
+        self.roles = set(roles)
+
+    async def __call__(
+        self,
+        current_user: User = Depends(get_current_user),
+    ) -> User:
+
+        if current_user.role not in self.roles:
             raise HTTPException(
-                status_code=403,
-                detail="Access denied: Insufficient permissions",
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="You do not have permission to perform this action.",
             )
+
         return current_user
+
+
+# ---------------------------------------------------------------------------
+# Reusable role-based dependency instances
+# ---------------------------------------------------------------------------
+from app.models.enums import UserRole  # noqa: E402
+
+admin_only = RoleChecker(
+    UserRole.ADMIN,
+)
+
+qa_manager_only = RoleChecker(
+    UserRole.ADMIN,
+    UserRole.QA_MANAGER,
+)
+
+investigator_only = RoleChecker(
+    UserRole.ADMIN,
+    UserRole.QA_MANAGER,
+    UserRole.INVESTIGATOR,
+)
+
+support_only = RoleChecker(
+    UserRole.ADMIN,
+    UserRole.CUSTOMER_SUPPORT,
+)
+
+authenticated_user = Depends(get_current_user)

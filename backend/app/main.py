@@ -10,7 +10,9 @@ from app.core.exceptions import (
     api_exception_handler,
     validation_exception_handler,
 )
-from app.core.database import engine, init_db
+from app.core.database import engine, init_db, SessionLocal
+from app.db.seed import seed_admin
+from app.repositories.user_repository import UserRepository
 from app.api.v1.router import api_v1_router
 
 logger.add(
@@ -28,6 +30,16 @@ async def lifespan(app: FastAPI):
         logger.info("Database tables initialized successfully")
     except Exception as e:
         logger.warning(f"Database initialization warning: {e}")
+
+    # Seed default admin user (idempotent)
+    try:
+        async with SessionLocal() as session:
+            repo = UserRepository(session)
+            await seed_admin(repo)
+            logger.info("Admin seeder ran successfully")
+    except Exception as e:
+        logger.warning(f"Admin seeder warning: {e}")
+
     yield
 
 
