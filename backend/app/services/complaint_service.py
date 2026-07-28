@@ -1,4 +1,5 @@
 from uuid import UUID
+from math import ceil
 
 from fastapi import HTTPException, status
 
@@ -8,7 +9,10 @@ from app.repositories.complaint_repository import ComplaintRepository
 from app.schemas.complaint import (
     ComplaintCreate,
     ComplaintUpdate,
+    ComplaintResponse,
+    ComplaintListResponse,
 )
+from app.schemas.complaint_query import ComplaintQuery
 from app.utils.complaint_number import generate_complaint_number
 
 
@@ -43,6 +47,26 @@ class ComplaintService:
     async def list(self):
 
         return await self.repo.list()
+
+    async def list_paginated(
+        self,
+        query: ComplaintQuery,
+    ):
+
+        complaints, total = await self.repo.list_with_filters(
+            query
+        )
+
+        return ComplaintListResponse(
+            items=[
+                ComplaintResponse.model_validate(c)
+                for c in complaints
+            ],
+            page=query.page,
+            page_size=query.page_size,
+            total=total,
+            total_pages=ceil(total / query.page_size) if total else 0,
+        )
 
     async def get(
         self,

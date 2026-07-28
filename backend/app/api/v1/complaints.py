@@ -10,7 +10,9 @@ from app.schemas.complaint import (
     ComplaintCreate,
     ComplaintResponse,
     ComplaintUpdate,
+    ComplaintListResponse,
 )
+from app.schemas.complaint_query import ComplaintQuery
 from app.services.complaint_service import ComplaintService
 
 router = APIRouter(
@@ -44,21 +46,19 @@ async def create_complaint(
 
 @router.get(
     "",
-    response_model=ApiResponse[list[ComplaintResponse]],
+    response_model=ApiResponse[ComplaintListResponse],
 )
 async def list_complaints(
+    query: ComplaintQuery = Depends(),
     service: ComplaintService = Depends(get_complaint_service),
 ):
 
-    complaints = await service.list()
+    data = await service.list_paginated(query)
 
     return ApiResponse(
         success=True,
         message="Complaints fetched successfully",
-        data=[
-            ComplaintResponse.model_validate(c)
-            for c in complaints
-        ],
+        data=data,
     )
 
 @router.get(

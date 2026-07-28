@@ -59,3 +59,14 @@ class ComplaintResponse(BaseModel):
     updated_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class ComplaintListResponse(BaseModel):
+    items: list[ComplaintResponse]
+
+    page: int
+    page_size: int
+
+    total: int
+    total_pages: int
+
