@@ -52,6 +52,17 @@ class RefreshTokenRepository:
         )
         return result.scalar_one_or_none()
 
+    async def revoke_by_hash(
+        self,
+        token_hash: str,
+    ) -> bool:
+        token = await self.get_valid_token(token_hash)
+        if token is None:
+            return False
+        token.revoked = True
+        await self.db.commit()
+        return True
+
     async def revoke(
         self,
         token: RefreshToken,

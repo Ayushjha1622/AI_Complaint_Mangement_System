@@ -8,9 +8,11 @@ from app.schemas.auth import (
     RegisterRequest,
     RefreshTokenRequest,
     TokenPairResponse,
+    LogoutRequest,
 )
 from app.schemas.user import UserResponse
 from app.schemas.common import ApiResponse
+from app.core.dependencies import get_current_user
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 
@@ -72,5 +74,37 @@ async def refresh(
         success=True,
         message="Token refreshed successfully",
         data=TokenPairResponse(**tokens),
+    )
+
+
+@router.post("/logout")
+async def logout(
+    payload: LogoutRequest,
+    service: AuthService = Depends(get_auth_service),
+):
+    result = await service.logout(
+        payload.refresh_token
+    )
+
+    return ApiResponse(
+        success=True,
+        message=result["message"],
+        data=None,
+    )
+
+
+@router.post("/logout-all")
+async def logout_all(
+    current_user=Depends(get_current_user),
+    service: AuthService = Depends(get_auth_service),
+):
+    result = await service.logout_all(
+        current_user
+    )
+
+    return ApiResponse(
+        success=True,
+        message=result["message"],
+        data=None,
     )
 

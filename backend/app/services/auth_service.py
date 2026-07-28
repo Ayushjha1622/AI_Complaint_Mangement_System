@@ -127,3 +127,37 @@ class AuthService:
             "refresh_token": new_refresh,
             "token_type": "bearer",
         }
+
+    async def logout(
+        self,
+        refresh_token: str,
+    ):
+        payload = decode_token(refresh_token)
+
+        if payload.get("type") != "refresh":
+            raise InvalidCredentialsException()
+
+        hashed = hash_refresh_token(refresh_token)
+
+        revoked = await self.refresh_repo.revoke_by_hash(
+            hashed
+        )
+
+        if not revoked:
+            raise InvalidCredentialsException()
+
+        return {
+            "message": "Logout successful"
+        }
+
+    async def logout_all(
+        self,
+        current_user,
+    ):
+        await self.refresh_repo.revoke_all(
+            current_user.id
+        )
+
+        return {
+            "message": "Logged out from all devices"
+        }

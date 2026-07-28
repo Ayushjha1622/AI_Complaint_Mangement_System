@@ -45,3 +45,7 @@ class TokenPairResponse(BaseModel):
     refresh_token: str
     token_type: str = "bearer"
 
+
+class LogoutRequest(BaseModel):
+    refresh_token: str
+
