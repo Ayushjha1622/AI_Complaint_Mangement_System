@@ -2,7 +2,13 @@ from fastapi import APIRouter, Depends, status
 from fastapi.security import OAuth2PasswordRequestForm
 from app.api.deps import get_auth_service
 from app.services.auth_service import AuthService
-from app.schemas.auth import RegisterRequest, LoginRequest, LoginResponse
+from app.schemas.auth import (
+    LoginRequest,
+    LoginResponse,
+    RegisterRequest,
+    RefreshTokenRequest,
+    TokenPairResponse,
+)
 from app.schemas.user import UserResponse
 from app.schemas.common import ApiResponse
 
@@ -22,7 +28,7 @@ async def register(
     )
 
 
-@router.post("/login", response_model=ApiResponse[LoginResponse])
+@router.post("/login", response_model=ApiResponse[TokenPairResponse])
 async def login(
     payload: LoginRequest,
     service: AuthService = Depends(get_auth_service)
@@ -31,7 +37,7 @@ async def login(
     return ApiResponse(
         success=True,
         message="Login successful",
-        data=LoginResponse(**token_data),
+        data=TokenPairResponse(**token_data),
     )
 
 
@@ -48,4 +54,23 @@ async def token_login(
     )
 
     return token_data
+
+
+@router.post(
+    "/refresh",
+    response_model=ApiResponse[TokenPairResponse],
+)
+async def refresh(
+    payload: RefreshTokenRequest,
+    service: AuthService = Depends(get_auth_service),
+):
+    tokens = await service.refresh(
+        payload.refresh_token
+    )
+
+    return ApiResponse(
+        success=True,
+        message="Token refreshed successfully",
+        data=TokenPairResponse(**tokens),
+    )
 

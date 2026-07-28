@@ -6,6 +6,7 @@ from jose import JWTError, jwt
 from app.core.config import settings
 
 import bcrypt
+import hashlib
 
 REFRESH_TOKEN_EXPIRE_DAYS = 7
 
@@ -73,3 +74,9 @@ def decode_token(token: str) -> dict[str, Any]:
         settings.SECRET_KEY,
         algorithms=[settings.ALGORITHM],
     )
+
+
+def hash_refresh_token(token: str) -> str:
+    return hashlib.sha256(
+        token.encode("utf-8")
+    ).hexdigest()

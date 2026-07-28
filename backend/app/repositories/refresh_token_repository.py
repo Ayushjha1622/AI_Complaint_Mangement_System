@@ -40,6 +40,18 @@ class RefreshTokenRepository:
 
         return result.scalar_one_or_none()
 
+    async def get_valid_token(
+        self,
+        token_hash: str,
+    ):
+        result = await self.db.execute(
+            select(RefreshToken).where(
+                RefreshToken.token_hash == token_hash,
+                RefreshToken.revoked.is_(False),
+            )
+        )
+        return result.scalar_one_or_none()
+
     async def revoke(
         self,
         token: RefreshToken,
