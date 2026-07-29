@@ -13,6 +13,7 @@ class Settings(BaseSettings):
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
     GROQ_API_KEY: str = "your_groq_api_key_here"
+    LLM_MODEL: str = "gemma2-9b-it"
 
     model_config = SettingsConfigDict(
         env_file=".env",

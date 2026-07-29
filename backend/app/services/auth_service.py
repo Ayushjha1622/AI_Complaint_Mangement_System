@@ -12,7 +12,7 @@ from app.core.security import (
     decode_token,
 )
 from app.core.exceptions import APIException, InvalidCredentialsException
-from app.schemas.auth import RegisterRequest, LoginRequest
+from app.schemas.auth import RegisterRequest, LoginRequest, UserProfileResponse
 
 
 class AuthService:
@@ -162,3 +162,11 @@ class AuthService:
         return {
             "message": "Logged out from all devices"
         }
+
+    async def get_current_user_profile(
+        self,
+        current_user: User,
+    ) -> UserProfileResponse:
+        return UserProfileResponse.model_validate(
+            current_user
+        )

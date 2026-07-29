@@ -10,6 +10,7 @@ from app.core.complaint_workflow import is_valid_transition
 from app.models.enums import UserRole
 from app.repositories.complaint_repository import ComplaintRepository
 from app.repositories.user_repository import UserRepository
+from app.services.timeline_service import TimelineService
 from app.schemas.complaint import (
     ComplaintCreate,
     ComplaintUpdate,
@@ -28,9 +29,11 @@ class ComplaintService:
         self,
         repo: ComplaintRepository,
         user_repo: UserRepository,
+        timeline_service: TimelineService,
     ):
         self.repo = repo
         self.user_repo = user_repo
+        self.timeline_service = timeline_service
 
     async def create(
         self,
@@ -50,15 +53,29 @@ class ComplaintService:
             created_by=current_user.id,
         )
 
-        return await self.repo.create(complaint)
+        complaint = await self.repo.create(complaint)
+
+        await self.timeline_service.log(
+            complaint_id=complaint.id,
+            action="COMPLAINT_CREATED",
+            field_name=None,
+            old_value=None,
+            new_value=complaint.status.value,
+            performed_by=current_user.id,
+        )
+
+        return complaint
 
     async def assign_complaint(
         self,
         complaint_id: UUID,
         payload: ComplaintAssignRequest,
+        current_user: User,
     ) -> Complaint:
 
         complaint = await self.get(complaint_id)
+
+        old_assignee = complaint.assigned_to
 
         investigator = await self.user_repo.get_by_id(
             payload.assigned_to
@@ -76,19 +93,33 @@ class ComplaintService:
                 detail="Assigned user must have INVESTIGATOR role",
             )
 
-        return await self.repo.assign_complaint(
+        complaint = await self.repo.assign_complaint(
             complaint,
             investigator.id,
         )
+
+        await self.timeline_service.log(
+            complaint_id=complaint.id,
+            action="ASSIGNED",
+            field_name="assigned_to",
+            old_value=str(old_assignee) if old_assignee else None,
+            new_value=str(investigator.id),
+            performed_by=current_user.id,
+        )
+
+        return complaint
 
     async def update_status(
         self,
         complaint_id: UUID,
         payload: ComplaintStatusUpdate,
+        current_user: User,
     ) -> Complaint:
 
         # Fetch complaint
         complaint = await self.get(complaint_id)
+
+        old_status = complaint.status
 
         # Validate workflow transition
         if not is_valid_transition(
@@ -107,9 +138,20 @@ class ComplaintService:
         # Update status
         complaint.status = payload.status
 
-        return await self.repo.update_status(
+        complaint = await self.repo.update_status(
             complaint
         )
+
+        await self.timeline_service.log(
+            complaint_id=complaint.id,
+            action="STATUS_CHANGED",
+            field_name="status",
+            old_value=old_status.value,
+            new_value=payload.status.value,
+            performed_by=current_user.id,
+        )
+
+        return complaint
 
     async def list(self):
 

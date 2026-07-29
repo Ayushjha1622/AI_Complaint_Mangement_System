@@ -1,16 +1,21 @@
-export type ApiError = {
+export interface ApiResponse<T> {
+  success: boolean;
   message: string;
-  status?: number;
-};
-
-export type PaginatedResponse<T> = {
-  data: T[];
-  total: number;
-  page: number;
-  pageSize: number;
-};
-
-export type ApiResponse<T> = {
   data: T;
-  message?: string;
-};
+}
+
+export interface ApiError {
+  detail: string;
+}
+
+export interface Pagination {
+  page: number;
+  page_size: number;
+  total: number;
+  total_pages: number;
+}
+
+export interface PaginatedResponse<T> {
+  items: T[];
+  pagination: Pagination;
+}

@@ -1,5 +1,7 @@
 import re
 from pydantic import BaseModel, EmailStr, field_validator
+from uuid import UUID
+from app.models.enums import UserRole
 
 class LoginRequest(BaseModel):
     email: EmailStr
@@ -48,4 +50,15 @@ class TokenPairResponse(BaseModel):
 
 class LogoutRequest(BaseModel):
     refresh_token: str
+
+
+class UserProfileResponse(BaseModel):
+    id: UUID
+    full_name: str
+    email: str
+    role: UserRole
+
+    model_config = {
+        "from_attributes": True
+    }
 

@@ -69,6 +69,20 @@ class ComplaintStatusUpdate(BaseModel):
     status: ComplaintStatus
 
 
+class ComplaintTimelineResponse(BaseModel):
+    id: UUID
+    action: str
+    field_name: str | None = None
+    old_value: str | None = None
+    new_value: str | None = None
+    performed_by: UUID
+    created_at: datetime
+
+    model_config = ConfigDict(
+        from_attributes=True
+    )
+
+
 class ComplaintListResponse(BaseModel):
     items: list[ComplaintResponse]
 

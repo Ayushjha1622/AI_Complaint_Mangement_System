@@ -1,4 +1,7 @@
-import { useMemo, useState } from "react";
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useAppDispatch, useAppSelector } from "@/app/hooks";
+import { fetchComplaints } from "@/features/complaints/complaintSlice";
 
 import ComplaintSearch from "@/components/complaint/ComplaintSearch";
 import ComplaintFilters from "@/components/complaint/ComplaintFilters";
@@ -7,59 +10,57 @@ import ComplaintTable from "@/components/complaint/ComplaintTable";
 import Pagination from "@/components/complaint/Pagination";
 import BulkActions from "@/components/complaint/BulkActions";
 
-import { complaints } from "@/data/complaints";
-import type { Complaint } from "@/data/complaints";
-
-const PAGE_SIZE = 10;
-
 export default function ComplaintInventoryPage() {
-  const [search, setSearch] = useState("");
-  const [status, setStatus] = useState("");
-  const [priority, setPriority] = useState("");
-
-  const [page, setPage] = useState(1);
-
-  const filteredComplaints = useMemo(() => {
-    return complaints.filter((complaint: Complaint) => {
-      const matchesSearch =
-        complaint.id.toLowerCase().includes(search.toLowerCase()) ||
-        complaint.customer.toLowerCase().includes(search.toLowerCase()) ||
-        complaint.product.toLowerCase().includes(search.toLowerCase());
-
-      const matchesStatus =
-        status === "" || complaint.status === status;
-
-      const matchesPriority =
-        priority === "" || complaint.priority === priority;
-
-      return (
-        matchesSearch &&
-        matchesStatus &&
-        matchesPriority
-      );
-    });
-  }, [search, status, priority]);
-
-  const totalPages = Math.max(
-    1,
-    Math.ceil(filteredComplaints.length / PAGE_SIZE)
+  const dispatch = useAppDispatch();
+  const navigate = useNavigate();
+  const { data, loading } = useAppSelector(
+    (state) => state.complaints
   );
 
-  const paginatedComplaints = filteredComplaints.slice(
-    (page - 1) * PAGE_SIZE,
-    page * PAGE_SIZE
-  );
+  const [query, setQuery] = useState({
+    page: 1,
+    page_size: 10,
+    search: "",
+    status: "",
+    priority: "",
+    category: "",
+    sort_by: "created_at",
+    sort_order: "desc" as "asc" | "desc",
+  });
+
+  useEffect(() => {
+    dispatch(fetchComplaints(query));
+  }, [dispatch, query]);
+
+  const handleSort = (column: string) => {
+    setQuery((prev) => ({
+      ...prev,
+      sort_by: column,
+      sort_order:
+        prev.sort_by === column && prev.sort_order === "asc" ? "desc" : "asc",
+    }));
+  };
+
+  const openComplaint = (id: string) => {
+    navigate(`/complaints/${id}`);
+  };
+
+  const complaintsList = data?.items ?? [];
+  const paginationInfo = data?.pagination ?? {
+    page: 1,
+    page_size: 10,
+    total: 0,
+    total_pages: 1,
+  };
 
   return (
     <div className="space-y-8 p-6">
-
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-slate-900">
             Complaint Inventory
           </h1>
-
           <p className="mt-1 text-slate-500">
             Manage customer complaints efficiently.
           </p>
@@ -69,54 +70,60 @@ export default function ComplaintInventoryPage() {
       {/* Stats */}
       <div className="grid gap-6 md:grid-cols-4">
         <ComplaintStats
-          title="Total"
-          value={complaints.length}
+          title="Total Complaints"
+          value={loading ? "..." : paginationInfo.total}
         />
-
-        <ComplaintStats
-          title="Filtered"
-          value={filteredComplaints.length}
-        />
-
         <ComplaintStats
           title="Open"
-          value={
-            complaints.filter(
-              (c) => c.status === "Open"
-            ).length
-          }
+          value={loading ? "..." : complaintsList.filter((c) => c.status === "Open").length}
         />
-
+        <ComplaintStats
+          title="In Progress"
+          value={loading ? "..." : complaintsList.filter((c) => c.status === "In Progress").length}
+        />
         <ComplaintStats
           title="Resolved"
-          value={
-            complaints.filter(
-              (c) => c.status === "Resolved"
-            ).length
-          }
+          value={loading ? "..." : complaintsList.filter((c) => c.status === "Resolved").length}
         />
       </div>
 
       {/* Search */}
       <ComplaintSearch
-        value={search}
+        value={query.search}
         onChange={(value) => {
-          setSearch(value);
-          setPage(1);
+          setQuery((prev) => ({
+            ...prev,
+            page: 1,
+            search: value,
+          }));
         }}
       />
 
       {/* Filters */}
       <ComplaintFilters
-        status={status}
-        priority={priority}
+        status={query.status}
+        priority={query.priority}
+        category={query.category}
         onStatusChange={(value) => {
-          setStatus(value);
-          setPage(1);
+          setQuery((prev) => ({
+            ...prev,
+            page: 1,
+            status: value,
+          }));
         }}
         onPriorityChange={(value) => {
-          setPriority(value);
-          setPage(1);
+          setQuery((prev) => ({
+            ...prev,
+            page: 1,
+            priority: value,
+          }));
+        }}
+        onCategoryChange={(value) => {
+          setQuery((prev) => ({
+            ...prev,
+            page: 1,
+            category: value,
+          }));
         }}
       />
 
@@ -124,24 +131,39 @@ export default function ComplaintInventoryPage() {
       <BulkActions />
 
       {/* Table */}
-      <ComplaintTable
-        complaints={paginatedComplaints}
-        onView={(complaint) => {
-          console.log(complaint);
-        }}
-      />
+      {loading ? (
+        <div className="flex min-h-[300px] items-center justify-center rounded-2xl border border-slate-100 bg-white shadow-sm">
+          <div className="flex flex-col items-center gap-2">
+            <div className="h-8 w-8 animate-spin rounded-full border-4 border-indigo-600/30 border-t-indigo-600" />
+            <p className="text-sm font-medium text-slate-500">Loading complaints...</p>
+          </div>
+        </div>
+      ) : (
+        <ComplaintTable
+          complaints={complaintsList}
+          sortBy={query.sort_by}
+          sortOrder={query.sort_order}
+          onSort={handleSort}
+          onRowClick={(complaint) => openComplaint(complaint.id)}
+          onView={(complaint) => openComplaint(complaint.id)}
+        />
+      )}
 
       {/* Pagination */}
       <Pagination
-        page={page}
-        totalPages={totalPages}
+        page={query.page}
+        totalPages={paginationInfo.total_pages}
         onPrevious={() =>
-          setPage((prev) => Math.max(1, prev - 1))
+          setQuery((prev) => ({
+            ...prev,
+            page: Math.max(1, prev.page - 1),
+          }))
         }
         onNext={() =>
-          setPage((prev) =>
-            Math.min(totalPages, prev + 1)
-          )
+          setQuery((prev) => ({
+            ...prev,
+            page: Math.min(paginationInfo.total_pages, prev.page + 1),
+          }))
         }
       />
     </div>

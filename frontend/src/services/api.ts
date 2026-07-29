@@ -1,37 +1,34 @@
-const BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8000/api/v1";
+import axios from "axios";
 
-export interface ApiResponse<T> {
-  success: boolean;
-  message: str;
-  data: T;
-}
+const api = axios.create({
+  baseURL: import.meta.env.VITE_API_URL || "http://localhost:8000/api/v1",
+  headers: {
+    "Content-Type": "application/json",
+  },
+});
 
-export async function apiFetch<T>(endpoint: string, options?: RequestInit): Promise<T> {
-  const response = await fetch(`${BASE_URL}${endpoint}`, {
-    headers: {
-      "Content-Type": "application/json",
-      ...options?.headers,
-    },
-    ...options,
-  });
+api.interceptors.request.use((config) => {
+  const token = localStorage.getItem("access_token");
 
-  if (!response.ok) {
-    const errorData = await response.json().catch(() => ({}));
-    throw new Error(errorData.message || `API Error: ${response.statusText}`);
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
   }
 
-  const json = await response.json();
-  if (json && typeof json === "object" && "success" in json && "data" in json) {
-    return json.data as T;
-  }
-  return json as T;
-}
+  return config;
+});
 
-export default {
-  get: <T>(endpoint: string) => apiFetch<T>(endpoint, { method: "GET" }),
-  post: <T>(endpoint: string, data: any) =>
-    apiFetch<T>(endpoint, { method: "POST", body: JSON.stringify(data) }),
-  put: <T>(endpoint: string, data: any) =>
-    apiFetch<T>(endpoint, { method: "PUT", body: JSON.stringify(data) }),
-  delete: <T>(endpoint: string) => apiFetch<T>(endpoint, { method: "DELETE" }),
-};
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      localStorage.removeItem("access_token");
+
+      // Later we'll use refresh token instead
+      window.location.href = "/login";
+    }
+
+    return Promise.reject(error);
+  }
+);
+
+export default api;

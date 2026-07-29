@@ -2,7 +2,7 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends, status
 
-from app.api.deps import get_complaint_service
+from app.api.deps import get_complaint_service, get_timeline_service
 from app.core.dependencies import get_current_user, RoleChecker, qa_manager_only, investigator_only
 from app.models.user import User
 from app.models.enums import UserRole
@@ -14,7 +14,9 @@ from app.schemas.complaint import (
     ComplaintListResponse,
     ComplaintAssignRequest,
     ComplaintStatusUpdate,
+    ComplaintTimelineResponse,
 )
+from app.services.timeline_service import TimelineService
 from app.schemas.complaint_query import ComplaintQuery
 from app.services.complaint_service import ComplaintService
 
@@ -145,6 +147,7 @@ async def assign_complaint(
     complaint = await service.assign_complaint(
         complaint_id,
         payload,
+        current_user,
     )
 
     return ApiResponse(
@@ -168,10 +171,34 @@ async def update_complaint_status(
     complaint = await service.update_status(
         complaint_id,
         payload,
+        current_user,
     )
 
     return ApiResponse(
         success=True,
         message="Complaint status updated successfully",
         data=ComplaintResponse.model_validate(complaint),
+    )
+
+@router.get(
+    "/{complaint_id}/timeline",
+    response_model=ApiResponse[list[ComplaintTimelineResponse]],
+)
+async def get_timeline(
+    complaint_id: UUID,
+    service: TimelineService = Depends(get_timeline_service),
+    _: User = Depends(get_current_user),
+):
+
+    history = await service.get_history(
+        complaint_id
+    )
+
+    return ApiResponse(
+        success=True,
+        message="Timeline fetched successfully",
+        data=[
+            ComplaintTimelineResponse.model_validate(item)
+            for item in history
+        ],
     )

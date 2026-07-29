@@ -9,10 +9,12 @@ from app.schemas.auth import (
     RefreshTokenRequest,
     TokenPairResponse,
     LogoutRequest,
+    UserProfileResponse,
 )
 from app.schemas.user import UserResponse
 from app.schemas.common import ApiResponse
 from app.core.dependencies import get_current_user
+from app.models import User
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 
@@ -106,5 +108,24 @@ async def logout_all(
         success=True,
         message=result["message"],
         data=None,
+    )
+
+
+@router.get(
+    "/me",
+    response_model=ApiResponse[UserProfileResponse],
+)
+async def get_me(
+    current_user: User = Depends(get_current_user),
+    service: AuthService = Depends(get_auth_service),
+):
+    profile = await service.get_current_user_profile(
+        current_user
+    )
+
+    return ApiResponse(
+        success=True,
+        message="User profile fetched successfully",
+        data=profile,
     )
 

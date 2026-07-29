@@ -89,3 +89,9 @@ class Complaint(BaseModel):
         foreign_keys=[created_by],
         back_populates="created_complaints",
     )
+
+    timeline = relationship(
+        "ComplaintTimeline",
+        back_populates="complaint",
+        cascade="all, delete-orphan",
+    )

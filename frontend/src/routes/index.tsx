@@ -7,6 +7,9 @@ import {
 import AppLayout from "@/layouts/AppLayout";
 import { ROUTES } from "@/constants/routes";
 
+import LoginPage from "@/pages/Login/LoginPage";
+import ProtectedRoute from "./ProtectedRoute";
+
 import DashboardPage from "@/pages/Dashboard/DashboardPage";
 import ComplaintInventoryPage from "@/pages/ComplaintInventory/ComplaintInventoryPage";
 import ComplaintFormPage from "@/pages/ComplaintForm/ComplaintFormPage";
@@ -20,7 +23,18 @@ export default function RouterProvider() {
     return (
         <BrowserRouter>
             <Routes>
-                <Route element={<AppLayout />}>
+                <Route
+                    path={ROUTES.LOGIN}
+                    element={<LoginPage />}
+                />
+
+                <Route
+                    element={
+                        <ProtectedRoute>
+                            <AppLayout />
+                        </ProtectedRoute>
+                    }
+                >
                     <Route
                         path={ROUTES.DASHBOARD}
                         element={<DashboardPage />}

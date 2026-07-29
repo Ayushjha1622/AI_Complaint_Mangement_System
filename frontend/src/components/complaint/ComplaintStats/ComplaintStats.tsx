@@ -2,7 +2,7 @@ import Card from "@/components/ui/Card/Card";
 
 interface Props {
     title: string;
-    value: number;
+    value: number | string;
 }
 
 export default function ComplaintStats({

@@ -3,18 +3,22 @@ import Select from "@/components/ui/Select/Select";
 interface Props {
     status: string;
     priority: string;
+    category: string;
     onStatusChange: (value: string) => void;
     onPriorityChange: (value: string) => void;
+    onCategoryChange: (value: string) => void;
 }
 
 export default function ComplaintFilters({
     status,
     priority,
+    category,
     onStatusChange,
     onPriorityChange,
+    onCategoryChange,
 }: Props) {
     return (
-        <div className="grid gap-4 md:grid-cols-2">
+        <div className="grid gap-4 md:grid-cols-3">
             <Select
                 value={status}
                 onChange={(e) => onStatusChange(e.target.value)}
@@ -34,6 +38,18 @@ export default function ComplaintFilters({
                 <option value="Medium">Medium</option>
                 <option value="High">High</option>
                 <option value="Critical">Critical</option>
+            </Select>
+
+            <Select
+                value={category}
+                onChange={(e) => onCategoryChange(e.target.value)}
+            >
+                <option value="">All Categories</option>
+                <option value="Product">Product</option>
+                <option value="Service">Service</option>
+                <option value="Billing">Billing</option>
+                <option value="Delivery">Delivery</option>
+                <option value="Other">Other</option>
             </Select>
         </div>
     );

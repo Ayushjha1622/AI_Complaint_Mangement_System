@@ -16,4 +16,5 @@ loguru
 langgraph
 langchain
 langchain-groq
+langchain-core
 groq
